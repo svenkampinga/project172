@@ -45,63 +45,120 @@
 				
 				char input;
 				
+				ledTest();
+				
 				while(1){
 				int x;
 				
-				input = getchar();
+				//input = getchar();
 				
+				/*
 				if (strchr(input, '0') != NULL)
 				{
 					printf("%c\n", input);
 					ledTest();
 				}
+				*/
 				
 				
 				//char str[6];
 				//snprintf(str, 6, "%d", x); 
 				//read_light_sensor();
 				//_delay_ms(10000);
-				//gettemp();
+				
+				char reader[50];
+				sprintf(reader, "%i", gettemp());
+
+				//strcat(reader, " C");
+				puts(reader);
+				
+				/*
+				if(gettemp() >= 26){
+					ledRood();
+				} else if (gettemp() >= 24){
+					ledGeel();
+				} else if (gettemp() >= 20){
+					ledGroen();
+				}*/
+				
+				
+				if(read_light_sensor() >= 300){
+					PORTB &= ~_BV(2);
+					PORTB &= ~_BV(3);
+					PORTB |= _BV(1);
+					_delay_ms(10000);
+				} else if (read_light_sensor() >= 100){
+					PORTB &= ~_BV(1);
+					PORTB &= ~_BV(3);
+					PORTB |= _BV(2);
+					_delay_ms(10000);
+				} else if (read_light_sensor() == 0){
+					ledTest();
+				} else if (read_light_sensor() >= 0){
+					PORTB &= ~_BV(1);
+					PORTB &= ~_BV(2);
+					PORTB |= _BV(3);
+					_delay_ms(10000);
+				}					
+				
 				//getdistance();
-				_delay_ms(10000);
 				
 				}
 
             }   
 			
 void ledTest(){
-	//Write 1 to pin 4
-	PORTB |= _BV(0);
+	PORTB &= ~_BV(2);
+	PORTB &= ~_BV(3);
+	PORTB |= _BV(1);
+	_delay_ms(5000);
+	PORTB &= ~_BV(3);
 	PORTB |= _BV(1);
 	PORTB |= _BV(2);
-	_delay_ms(10000);
-	PORTB &= ~_BV(0);
+	_delay_ms(5000);
 	PORTB &= ~_BV(1);
-	PORTB &= ~_BV(2);
-	_delay_ms(10000);
-	PORTB |= _BV(0);
-	_delay_ms(10000);
-	PORTB &= ~_BV(0);
-	_delay_ms(10000);
-	PORTB |= _BV(1);
-	_delay_ms(10000);
-	PORTB &= ~_BV(1);
-	_delay_ms(10000);
+	PORTB &= ~_BV(3);
 	PORTB |= _BV(2);
-	_delay_ms(10000);
-	PORTB &= ~_BV(2);
-	_delay_ms(10000);
-	PORTB |= _BV(0);
-	PORTB |= _BV(1);
+	_delay_ms(5000);
+	PORTB &= ~_BV(1);
 	PORTB |= _BV(2);
-	_delay_ms(10000);
-	PORTB &= ~_BV(0);
+	PORTB |= _BV(3);
+	_delay_ms(5000);
 	PORTB &= ~_BV(1);
 	PORTB &= ~_BV(2);
+	PORTB |= _BV(3);
+	_delay_ms(5000);
+	PORTB &= ~_BV(2);
+	PORTB |= _BV(1);
+	PORTB |= _BV(3);
+	_delay_ms(5000);
+
 	
 	
 	
 }	
+
+void ledRood(){
+	PORTB |= _BV(0);
+	_delay_ms(10000);
+	PORTB &= ~_BV(0);
+	_delay_ms(10000);
+}	
+
+void ledGeel(){
+	PORTB |= _BV(1);
+	_delay_ms(10000);
+	PORTB &= ~_BV(1);
+	_delay_ms(10000);
+}
+
+void ledGroen(){
+	PORTB |= _BV(2);
+	_delay_ms(10000);
+	PORTB &= ~_BV(2);
+	_delay_ms(10000);
+}
+	
 			
 uint16_t ReadADC(uint8_t ADCchannel)
 {
@@ -122,30 +179,29 @@ void InitADC()
 	ADCSRA |= (1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0)|(1<<ADEN);
 }
 			
-void read_light_sensor(){
-	int reading = ReadADC(1);
+int read_light_sensor(){
+	int reading = ReadADC(0);
 	
+	/*
 	char reader[50];
 	sprintf(reader, "%i", reading);
 	
 	serialWrite("|L");
 	serialWrite(reader);
 	serialWrite("|\n");
+	*/
+	return reading;
 }
 
-void gettemp(){
+
+int gettemp(){
 	ADMUX &= ~_BV(MUX0); // Set channel point to port 0
 	ADCSRA |= _BV(ADSC); // Start adc measurement
 	loop_until_bit_is_clear(ADCSRA, ADSC); // proceed when done
 
 	int temp = (((float)ADCW * 5000 / 1024) - 500) / 10;
 	
-	char reader[50];
-	sprintf(reader, "%i", temp);
-
-	strcat(reader, " C");
-
-	puts(reader);
+	return temp;
 }
 
 void getdistance(){
