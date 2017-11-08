@@ -50,15 +50,26 @@
 				while(1){
 				int x;
 				
-				//input = getchar();
+				char reader[50];
+				sprintf(reader, "%i", read_light_sensor());
+
+				//strcat(reader, " C");
+				puts(reader);
 				
-				/*
-				if (strchr(input, '0') != NULL)
+				char input2[1];
+				input = getchar();
+				sprintf(input2, "%c", input);
+				puts(input2);
+				
+				if (strchr(input2, '0') != NULL)
 				{
-					printf("%c\n", input);
-					ledTest();
+					ledRood();
+				} else if (strchr(input2, '1') != NULL){
+					ledBlauw();
+				} else if (strchr(input2, '2') != NULL){
+					ledGroen();
 				}
-				*/
+				
 				
 				
 				//char str[6];
@@ -66,11 +77,7 @@
 				//read_light_sensor();
 				//_delay_ms(10000);
 				
-				char reader[50];
-				sprintf(reader, "%i", gettemp());
-
-				//strcat(reader, " C");
-				puts(reader);
+				
 				
 				/*
 				if(gettemp() >= 26){
@@ -81,7 +88,7 @@
 					ledGroen();
 				}*/
 				
-				
+				/*
 				if(read_light_sensor() >= 300){
 					PORTB &= ~_BV(2);
 					PORTB &= ~_BV(3);
@@ -99,7 +106,8 @@
 					PORTB &= ~_BV(2);
 					PORTB |= _BV(3);
 					_delay_ms(10000);
-				}					
+				}	
+				*/				
 				
 				//getdistance();
 				
@@ -139,23 +147,23 @@ void ledTest(){
 }	
 
 void ledRood(){
-	PORTB |= _BV(0);
-	_delay_ms(10000);
-	PORTB &= ~_BV(0);
+	PORTB &= ~_BV(2);
+	PORTB &= ~_BV(3);
+	PORTB |= _BV(1);
 	_delay_ms(10000);
 }	
 
-void ledGeel(){
-	PORTB |= _BV(1);
-	_delay_ms(10000);
+void ledBlauw(){
 	PORTB &= ~_BV(1);
+	PORTB &= ~_BV(2);
+	PORTB |= _BV(3);
 	_delay_ms(10000);
 }
 
 void ledGroen(){
+	PORTB &= ~_BV(1);
+	PORTB &= ~_BV(3);
 	PORTB |= _BV(2);
-	_delay_ms(10000);
-	PORTB &= ~_BV(2);
 	_delay_ms(10000);
 }
 	
