@@ -59,22 +59,22 @@ class MyThread(QtCore.QThread):
             else:
                 arduinoDataTemp = ""
 
-            print(arduinoDataLicht)
+
 
 
             #print(data)
-            if arduinoDataLicht != "":
+            if self.serialY == 0:
+                if arduinoDataLicht != "":
                     time.sleep(0.5)  # random sleep to imitate working
 
                     randTotaal = (1, arduinoDataLicht)
                     self.trigger.emit(randTotaal)
-            elif arduinoDataTemp != "":
+            if self.serialX == 0:
+                if arduinoDataTemp != "":
                     time.sleep(0.5)  # random sleep to imitate working
 
                     randTotaal = (2, arduinoDataTemp)
                     self.trigger.emit(randTotaal)
-            else:
-                    h = 0
 
 class ExampleApp(QtWidgets.QMainWindow, design_ui.Ui_MainWindow):
     def __init__(self):
@@ -97,6 +97,9 @@ class ExampleApp(QtWidgets.QMainWindow, design_ui.Ui_MainWindow):
         self.lcdNumberLicht.display(0)
         self.lcdNumberTemp.display(0)
         self.start_threads()
+
+        if(self.serialX != 0 and self.serialY != 0):
+            self.showDialogError()
 
     def start_threads(self):
         temp = self.serialY
@@ -192,6 +195,16 @@ class ExampleApp(QtWidgets.QMainWindow, design_ui.Ui_MainWindow):
         if ok:
             self.le.setText(str(text))
 
+    def showDialogError(self):
+
+        choice = QtGui.QMessageBox.question(self, 'Error!',
+                                            "Check if you have at least 1 arduino connected",
+                                            QtGui.QMessageBox.Ok)
+        if choice == QtGui.QMessageBox.Ok:
+            print("Extracting Naaaaaaoooww!!!!")
+            sys.exit()
+        else:
+            pass
 
     def button(self):
         global seriesLicht, seriesTemp, line
