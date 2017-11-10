@@ -25,7 +25,10 @@ seriesTemp = []
 maxLight = 40
 maxTemp = 25
 
-state = "running"
+state = 0
+
+firstDown = True
+firstUp = False
 
 
 
@@ -35,45 +38,42 @@ class MyThread(QtCore.QThread):
     def __init__(self, parent=None):
         super(MyThread, self).__init__(parent)
 
-    def setup(self, thread_no):
+    def setup(self, thread_no, temp, light):
         self.thread_no = thread_no
+        self.serialY = temp
+        self.serialX = light
 
     def run(self):
         z = 0
         while True:
-            if state == "running":
-                if z < 30:
-                    z += 5
-                elif z > 30:
-                    z -= 5
 
-
-
-
-
-
+            if(self.serialY == 0):
+                arduinoLicht = serial.Serial('/dev/ttyACM0', 9600, timeout=.1)
                 arduinoDataLicht = (arduinoLicht.readline()[:-2]).decode('utf-8')
-                if (arduinoTemp != ""):
-                    arduinoDataTemp = (arduinoTemp.readline()[:-2]).decode('utf-8')
-                    print(arduinoDataTemp)
-                else:
-                    arduinoDataTemp = ""
-
-                print(arduinoDataLicht)
 
 
-                #print(data)
-                if arduinoDataLicht != "":
+            if (self.serialX == 0):
+                arduinoTemp = serial.Serial('/dev/ttyACM1', 9600, timeout=.1)
+                arduinoDataTemp = (arduinoTemp.readline()[:-2]).decode('utf-8')
+                print(arduinoDataTemp)
+            else:
+                arduinoDataTemp = ""
+
+            print(arduinoDataLicht)
+
+
+            #print(data)
+            if arduinoDataLicht != "":
                     time.sleep(0.5)  # random sleep to imitate working
 
                     randTotaal = (1, arduinoDataLicht)
                     self.trigger.emit(randTotaal)
-                elif arduinoDataTemp != "":
+            elif arduinoDataTemp != "":
                     time.sleep(0.5)  # random sleep to imitate working
 
                     randTotaal = (2, arduinoDataTemp)
                     self.trigger.emit(randTotaal)
-                else:
+            else:
                     h = 0
 
 class ExampleApp(QtWidgets.QMainWindow, design_ui.Ui_MainWindow):
@@ -96,17 +96,20 @@ class ExampleApp(QtWidgets.QMainWindow, design_ui.Ui_MainWindow):
 
         self.lcdNumberLicht.display(0)
         self.lcdNumberTemp.display(0)
+        self.start_threads()
 
     def start_threads(self):
+        temp = self.serialY
+        light = self.serialX
         self.threads = []  # this will keep a reference to threads
         thread = MyThread(self)  # create a thread
         thread.trigger.connect(self.update_text)  # connect to it's signal
-        thread.setup([0, 1])  # just setting up a parameter
+        thread.setup([0, 1], temp, light)  # just setting up a parameter
         thread.start()  # start the thread
         self.threads.append(thread)  # keep a reference
 
     def update_text(self, rand):
-        global seriesLicht, seriesTemp, line, randLicht, randTemp
+        global seriesLicht, seriesTemp, line, randLicht, randTemp, state, arduinoTemp, firstUp, firstDown
 
         [id, data] = rand
 
@@ -127,18 +130,41 @@ class ExampleApp(QtWidgets.QMainWindow, design_ui.Ui_MainWindow):
             self.graphicsViewLine.plot(seriesLicht)
             self.listWidget.addItem("Licht : " + str(randLicht))  # add file to the listWidget
 
-            if (int(randLicht) > maxLight):
-                arduinoLicht.write("2".encode())
-            elif (int(randLicht) > 20):
-                arduinoLicht.write("1".encode())
-            else:
+            if (int(randLicht) > maxLight and  self.serialY == 0):
+                arduinoLicht = serial.Serial('/dev/ttyACM0', 9600, timeout=.1)
+
+                if(firstDown):
+                    arduinoLicht.write("2".encode())
+                    arduinoLicht.write("1".encode())
+                    firstDown = False
+                    firstUp = True
+                else:
+                    arduinoLicht.write("1".encode())
+
+            elif (int(randLicht) < maxLight and  self.serialY == 0):
+                arduinoLicht = serial.Serial('/dev/ttyACM0', 9600, timeout=.1)
+                if (firstUp):
+                    arduinoLicht.write("2".encode())
+                    arduinoLicht.write("0".encode())
+                    firstUp = False
+                    firstDown = True
+                else:
+                    arduinoLicht.write("0".encode())
+            elif (self.serialY == 0):
+                arduinoLicht = serial.Serial('/dev/ttyACM0', 9600, timeout=.1)
                 arduinoLicht.write("0".encode())
+            elif (self.serialX == 0):
+                arduinoTemp = serial.Serial('/dev/ttyACM1', 9600, timeout=.1)
+                arduinoTemp.write("0".encode())
+
 
         if int(randTemp) != 0:
             seriesTemp.append(int(randTemp))
             self.lcdNumberTemp.display(randTemp)
             self.graphicsViewLine.plot(seriesTemp)
             self.listWidget.addItem("Temp : " + str(randTemp))  # add file to the listWidget
+
+            arduinoTemp = serial.Serial('/dev/ttyACM0', 9600, timeout=.1)
 
             if (int(randTemp) > 400):
                 arduinoTemp.write("2".encode())
@@ -166,14 +192,6 @@ class ExampleApp(QtWidgets.QMainWindow, design_ui.Ui_MainWindow):
         if ok:
             self.le.setText(str(text))
 
-
-
-    def buttonPause(self):
-        global state
-        if state == "running":
-            state = "pause"
-        else:
-            state = "running"
 
     def button(self):
         global seriesLicht, seriesTemp, line
