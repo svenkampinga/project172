@@ -1,8 +1,8 @@
 /*
  * serial_IN.h
  *
- * Created: 16-11-2016 19:46:01
- *  Author: Cyriel
+ * Created: 10-11-2016 
+ *  Author: Steven & Gaauwe
  */ 
 
 

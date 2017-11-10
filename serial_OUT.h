@@ -1,10 +1,10 @@
 /*
- * serial_OUT.h
+ * serial_IN.h
  *
- * Created: 11-11-2016 07:03:54
- *  Author: Cyriel
+ * Created: 10-11-2016 
+ *  Author: Steven & Gaauwe
  */ 
-#
+
 
 #ifndef SERIAL_OUT_H_
 #define SERIAL_OUT_H_
