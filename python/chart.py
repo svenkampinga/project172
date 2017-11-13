@@ -23,12 +23,20 @@ seriesLicht = []
 seriesTemp = []
 
 maxLight = 40
-maxTemp = 25
+maxTemp = 152
 
 state = 0
 
 firstDown = True
 firstUp = False
+
+firstDownTemp = True
+firstUpTemp = False
+
+triggerDownLicht = False
+triggerUpLicht = False
+triggerDownTemp = False
+triggerUpTemp = False
 
 
 
@@ -50,11 +58,13 @@ class MyThread(QtCore.QThread):
             if(self.serialY == 0):
                 arduinoLicht = serial.Serial('/dev/ttyACM0', 9600, timeout=.1)
                 arduinoDataLicht = (arduinoLicht.readline()[:-2]).decode('utf-8')
+                print(arduinoDataLicht)
 
 
             if (self.serialX == 0):
                 arduinoTemp = serial.Serial('/dev/ttyACM1', 9600, timeout=.1)
                 arduinoDataTemp = (arduinoTemp.readline()[:-2]).decode('utf-8')
+                arduinoTemp.write("0".encode())
                 print(arduinoDataTemp)
             else:
                 arduinoDataTemp = ""
@@ -65,13 +75,13 @@ class MyThread(QtCore.QThread):
             #print(data)
             if self.serialY == 0:
                 if arduinoDataLicht != "":
-                    time.sleep(0.5)  # random sleep to imitate working
+                    time.sleep(1.0)  # random sleep to imitate working
 
                     randTotaal = (1, arduinoDataLicht)
                     self.trigger.emit(randTotaal)
             if self.serialX == 0:
                 if arduinoDataTemp != "":
-                    time.sleep(0.5)  # random sleep to imitate working
+                    time.sleep(1.0)  # random sleep to imitate working
 
                     randTotaal = (2, arduinoDataTemp)
                     self.trigger.emit(randTotaal)
@@ -112,8 +122,9 @@ class ExampleApp(QtWidgets.QMainWindow, design_ui.Ui_MainWindow):
         self.threads.append(thread)  # keep a reference
 
     def update_text(self, rand):
-        global seriesLicht, seriesTemp, line, randLicht, randTemp, state, arduinoTemp, firstUp, firstDown
+        global seriesLicht, seriesTemp, line, randLicht, randTemp, state, arduinoTemp, firstUp, firstDown, firstUpTemp, firstDownTemp
 
+        global triggerDownLicht, triggerUpLicht, triggerDownTemp, triggerUpTemp
         [id, data] = rand
 
         randLicht = 0
@@ -126,7 +137,6 @@ class ExampleApp(QtWidgets.QMainWindow, design_ui.Ui_MainWindow):
         elif id == 2:
             randTemp = math.ceil(float(data))
 
-
         if int(randLicht) != 0:
             seriesLicht.append(int(randLicht))
             self.lcdNumberLicht.display(randLicht)
@@ -134,31 +144,14 @@ class ExampleApp(QtWidgets.QMainWindow, design_ui.Ui_MainWindow):
             self.listWidget.addItem("Licht : " + str(randLicht))  # add file to the listWidget
 
             if (int(randLicht) > maxLight and  self.serialY == 0):
-                arduinoLicht = serial.Serial('/dev/ttyACM0', 9600, timeout=.1)
 
-                if(firstDown):
-                    arduinoLicht.write("2".encode())
-                    arduinoLicht.write("1".encode())
-                    firstDown = False
-                    firstUp = True
-                else:
-                    arduinoLicht.write("1".encode())
+                triggerDownLicht = True
 
             elif (int(randLicht) < maxLight and  self.serialY == 0):
-                arduinoLicht = serial.Serial('/dev/ttyACM0', 9600, timeout=.1)
-                if (firstUp):
-                    arduinoLicht.write("2".encode())
-                    arduinoLicht.write("0".encode())
-                    firstUp = False
-                    firstDown = True
-                else:
-                    arduinoLicht.write("0".encode())
-            elif (self.serialY == 0):
-                arduinoLicht = serial.Serial('/dev/ttyACM0', 9600, timeout=.1)
-                arduinoLicht.write("0".encode())
-            elif (self.serialX == 0):
-                arduinoTemp = serial.Serial('/dev/ttyACM1', 9600, timeout=.1)
-                arduinoTemp.write("0".encode())
+
+                triggerDownLicht = False
+
+
 
 
         if int(randTemp) != 0:
@@ -167,16 +160,42 @@ class ExampleApp(QtWidgets.QMainWindow, design_ui.Ui_MainWindow):
             self.graphicsViewLine.plot(seriesTemp)
             self.listWidget.addItem("Temp : " + str(randTemp))  # add file to the listWidget
 
-            arduinoTemp = serial.Serial('/dev/ttyACM0', 9600, timeout=.1)
 
-            if (int(randTemp) > 400):
-                arduinoTemp.write("2".encode())
-            elif (int(randTemp) > 200):
-                arduinoTemp.write("1".encode())
+            if (int(randTemp) > maxTemp and  self.serialX == 0):
+
+                triggerDownTemp = True
+
+
+            elif (int(randTemp) < maxTemp and  self.serialX == 0):
+
+                triggerDownTemp = False
+
+
+        if(triggerDownLicht or triggerDownTemp):
+            arduinoLicht = serial.Serial('/dev/ttyACM0', 9600, timeout=.1)
+            if(firstDownTemp or firstDown):
+                firstDown = False
+                firstUp = True
+                firstDownTemp = False
+                firstUpTemp = True
+                arduinoLicht.write("2".encode())
+                arduinoLicht.write("2".encode())
             else:
-                arduinoTemp.write("0".encode())
+                arduinoLicht.write("1".encode())
+
         else:
-            h = 0
+            arduinoLicht = serial.Serial('/dev/ttyACM0', 9600, timeout=.1)
+            if (firstUpTemp or firstUp):
+                firstUp = False
+                firstDown = True
+                firstDownTemp = True
+                firstUpTemp = False
+                arduinoLicht.write("2".encode())
+                arduinoLicht.write("2".encode())
+            else:
+                arduinoLicht.write("0".encode())
+
+
 
     def showDialogLight(self):
 
@@ -193,11 +212,12 @@ class ExampleApp(QtWidgets.QMainWindow, design_ui.Ui_MainWindow):
                                               'Enter value:')
 
         if ok:
-            self.le.setText(str(text))
+            global maxTemp
+            maxTemp = int(text)
 
     def showDialogError(self):
 
-        choice = QtGui.QMessageBox.question(self, 'Error!',
+        choice = QtGui.QMessageBox.warning(self, 'Error!',
                                             "Check if you have at least 1 arduino connected",
                                             QtGui.QMessageBox.Ok)
         if choice == QtGui.QMessageBox.Ok:
