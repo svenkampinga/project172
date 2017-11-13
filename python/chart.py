@@ -95,9 +95,8 @@ class ExampleApp(QtWidgets.QMainWindow, design_ui.Ui_MainWindow):
         super(self.__class__, self).__init__()
         self.setupUi(self)  # This is defined in design.py file automatically
         # It sets up layout and widgets that are defined
-        self.btnReset.clicked.connect(self.start_threads)  # When the button is pressed
-        self.btnBrowse.clicked.connect(self.button)  # When the button is pressed
-        self.btnPause.clicked.connect(self.button)  # When the button is pressed
+        self.btnRolUit.clicked.connect(self.buttonRolUit)  # When the button is pressed
+        self.btnRolIn.clicked.connect(self.buttonRolIn)  # When the button is pressed
         self.menuSettings.addAction(self.actionLight_settings)
 
         self.graphicsViewLine.setTitle('My Graph')
@@ -221,28 +220,21 @@ class ExampleApp(QtWidgets.QMainWindow, design_ui.Ui_MainWindow):
                                             "Check if you have at least 1 arduino connected",
                                             QtGui.QMessageBox.Ok)
         if choice == QtGui.QMessageBox.Ok:
-            print("Extracting Naaaaaaoooww!!!!")
             sys.exit()
         else:
             pass
 
-    def button(self):
-        global seriesLicht, seriesTemp, line
+    def buttonRolUit(self):
+        global triggerDownTemp, triggerDownLicht
 
-        randLicht = randint(0, 9)
-        randTemp = randint(0, 9)
+        triggerDownTemp = True
+        triggerDownLicht = True
 
-        seriesLicht.append(randLicht)
-        seriesTemp.append(randTemp)
+    def buttonRolIn(self):
+        global triggerDownTemp, triggerDownLicht
 
-        line = self.graphicsViewLine
-
-        self.graphicsViewLine.plot(seriesLicht)
-        self.graphicsViewLine.plot(seriesTemp)
-        self.lcdNumberLicht.display(randLicht)
-        self.lcdNumberTemp.display(randTemp)
-        self.listWidget.addItem("Licht : " + str(randLicht))  # add file to the listWidget
-        self.listWidget.addItem("Temp : " + str(randTemp))  # add file to the listWidget
+        triggerDownTemp = False
+        triggerDownLicht = False
 
     def reset(self):
         global x
