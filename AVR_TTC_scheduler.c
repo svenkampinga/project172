@@ -242,6 +242,9 @@ void ledTest(){
 	PORTB |= _BV(1);
 	PORTB |= _BV(3);
 	_delay_ms(5000);
+	PORTB &= ~_BV(1);
+	PORTB &= ~_BV(2);
+	PORTB &= ~_BV(3);
 }	
 
 void ledRood(){
@@ -256,37 +259,9 @@ void ledBlauw(){
 	PORTB &= ~_BV(2);
 	PORTB |= _BV(3);
 	_delay_ms(10000);
-	PORTB &= _BV(1);
-	PORTB &= ~_BV(2);
-	PORTB &= ~_BV(3);
-	_delay_ms(10000);
 	PORTB &= ~_BV(1);
 	PORTB &= ~_BV(2);
-	PORTB |= _BV(3);
-	_delay_ms(10000);
-	PORTB &= _BV(1);
-	PORTB &= ~_BV(2);
 	PORTB &= ~_BV(3);
-	_delay_ms(10000);
-	PORTB &= ~_BV(1);
-	PORTB &= ~_BV(2);
-	PORTB |= _BV(3);
-	_delay_ms(10000);
-	PORTB &= _BV(1);
-	PORTB &= ~_BV(2);
-	PORTB &= ~_BV(3);
-	_delay_ms(10000);
-	PORTB &= ~_BV(1);
-	PORTB &= ~_BV(2);
-	PORTB |= _BV(3);
-	_delay_ms(10000);
-	PORTB &= _BV(1);
-	PORTB &= ~_BV(2);
-	PORTB &= ~_BV(3);
-	_delay_ms(10000);
-	PORTB &= ~_BV(1);
-	PORTB &= ~_BV(2);
-	PORTB |= _BV(3);
 	_delay_ms(10000);
 }
 
@@ -323,17 +298,12 @@ void read_serial(){
 	input = getchar();
 	sprintf(input2, "%c", input);
 	
-	if (strchr(input2, '0') != NULL)
-	{
+	if (strchr(input2, '0') != NULL){
 		ledGroen();
 	} else if (strchr(input2, '1') != NULL){
 		ledRood();
 	} else if (strchr(input2, '2') != NULL){
 		ledBlauw();
-		ledRood();
-	} else if (strchr(input2, '3') != NULL){
-		ledBlauw();
-		ledGroen();
 	}
 }	
 			
@@ -393,17 +363,14 @@ int main(void){
 				stdout = &uart_output;
 				stdin  = &uart_input;
 				DDRB = 0xFF;
-				
-				char input;
-				
-				
-				ledTest();
-				ledGroen();
-				SCH_Add_Task(read_light_sensor, 100, 100);
-				SCH_Add_Task(read_serial, 200, 100);
-				
+		
+				SCH_Add_Task(read_temp, 100, 50);
+				SCH_Add_Task(read_light_sensor, 150, 50);
+				SCH_Add_Task(read_serial, 200, 50);
 								
 				SCH_Start();
+				
+				ledTest();
 				
 				while(1){
 				SCH_Dispatch_Tasks();
